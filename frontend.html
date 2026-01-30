@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MULAH: Loyalty Points</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+
+    <!-- PAGE 1: Check Loyalty -->
+    <div id="page1" class="page">
+        <div>
+            <div class="logo">MULAH</div>
+            <div class="page-title large">Hello,<br>Welcome!</div>
+            <div class="subtitle">Check Your Loyalty Points & Rewards</div>
+
+            <div class="input-group">
+                <select class="country-code">
+                    <option value="+60">+60</option>
+                </select>
+                <input type="tel" class="input-field" id="phone" placeholder="Enter your mobile number" maxlength="11">
+            </div>
+
+            <div class="error-msg main" id="error">Phone number not found. Please try +60173527250</div>
+
+            <button class="btn btn-primary" onclick="checkLoyalty()">Check Loyalty Points</button>
+        </div>
+    </div>
+
+    <!-- PAGE 2: Registration -->
+    <div id="page2" class="page" style="display:none;">
+        <div>
+            <div class="logo">MULAH</div>
+            <div class="page-title">Registration</div>
+            <div class="description">Please fill up your details.</div>
+
+            <div class="form-group">
+                <label class="form-label">Name</label>
+                <input type="text" class="input-field" id="name" placeholder="Enter Name">
+                <div class="error-msg" id="nameError">*Please insert a name.</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Birthday</label>
+                <div class="input-group birthday">
+                    <input type="text" class="input-field" id="day" placeholder="DD" maxlength="2">
+                    <input type="text" class="input-field" id="month" placeholder="MM" maxlength="2">
+                    <input type="text" class="input-field" id="year" placeholder="YYYY" maxlength="4">
+                </div>
+                <div class="error-msg" id="birthdayError">*Please insert your birthday.</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="input-field" id="email" placeholder="Email Address">
+                <div class="error-msg" id="emailError">*Please insert a valid email address.</div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="noEmail">
+                    <label for="noEmail">No email address</label>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="submitForm()">Continue</button>
+        </div>
+    </div>
+
+    <!-- PAGE 3: Your Details -->
+    <div id="page3" class="page" style="display:none;">
+        <div>
+            <div class="logo">MULAH</div>
+            <div class="page-title success">Registration Complete!</div>
+            <div class="description">Your details have been successfully recorded.</div>
+
+            <div class="info-card">
+                <div class="info-item">
+                    <div class="info-label">Phone Number</div>
+                    <div class="info-value" id="displayPhone">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Name</div>
+                    <div class="info-value" id="displayName">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Birthday</div>
+                    <div class="info-value" id="displayBirthday">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Email</div>
+                    <div class="info-value" id="displayEmail">-</div>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary" onclick="startOver()">Check Loyalty</button>
+            <button class="btn btn-secondary" onclick="clearRegistration()" style="margin-top: 10px;">Clear Registration</button>
+        </div>
+    </div>
+
+    <div class="footer">
+        Powered by <a href="https://www.mulahrewards.com/" target="_blank">MulahRewards.com</a>
+    </div>
+</div>
+
+<script>
+    const phoneInput = document.getElementById('phone');
+    const errorMsg = document.getElementById('error');
+
+    phoneInput.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        errorMsg.style.display = 'none';
+    });
+
+    phoneInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') checkLoyalty();
+    });
+
+    function showPage(pageId) {
+        document.getElementById('page1').style.display = 'none';
+        document.getElementById('page2').style.display = 'none';
+        document.getElementById('page3').style.display = 'none';
+        document.getElementById(pageId).style.display = 'block';
+    }
+
+    function checkLoyalty() {
+        const phone = phoneInput.value.replace(/[\s-]/g, '');
+
+        if (!phone) {
+            errorMsg.textContent = 'Please enter your phone number';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        if (!/^\d+$/.test(phone)) {
+            errorMsg.textContent = 'Please enter only numbers';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        if (phone === '0173527250' || phone === '173527250') {
+            const fullPhone = '+60173527250';
+            sessionStorage.setItem('phone', fullPhone);
+
+            if (localStorage.getItem('user_' + fullPhone)) {
+                const userData = JSON.parse(localStorage.getItem('user_' + fullPhone));
+                sessionStorage.setItem('name', userData.name);
+                sessionStorage.setItem('birthday', userData.birthday);
+                sessionStorage.setItem('email', userData.email);
+                populateDetails();
+                showPage('page3');
+            } else {
+                showPage('page2');
+            }
+        } else {
+            errorMsg.textContent = 'Phone number not found.';
+            errorMsg.style.display = 'block';
+        }
+    }
+
+    ['day', 'month', 'year'].forEach(id => {
+        document.getElementById(id).addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+
+    document.getElementById('noEmail').addEventListener('change', function() {
+        const emailInput = document.getElementById('email');
+        emailInput.disabled = this.checked;
+        emailInput.style.backgroundColor = this.checked ? '#f5f5f5' : 'white';
+        if (this.checked) {
+            emailInput.value = '';
+            document.getElementById('emailError').style.display = 'none';
+        }
+    });
+
+    function submitForm() {
+        const name = document.getElementById('name').value.trim();
+        const day = document.getElementById('day').value;
+        const month = document.getElementById('month').value;
+        const year = document.getElementById('year').value;
+        const email = document.getElementById('email').value.trim();
+        const noEmail = document.getElementById('noEmail').checked;
+        let valid = true;
+
+        if (!name) { document.getElementById('nameError').style.display = 'block'; valid = false; }
+        else { document.getElementById('nameError').style.display = 'none'; }
+
+        if (!day || !month || !year) { document.getElementById('birthdayError').style.display = 'block'; valid = false; }
+        else { document.getElementById('birthdayError').style.display = 'none'; }
+
+        if (!noEmail && (!email || !email.includes('@'))) { document.getElementById('emailError').style.display = 'block'; valid = false; }
+        else { document.getElementById('emailError').style.display = 'none'; }
+
+        if (valid) {
+            const phone = sessionStorage.getItem('phone');
+            const birthday = `${day}/${month}/${year}`;
+            const finalEmail = noEmail ? 'No email provided' : email;
+
+            const userData = { name: name, birthday: birthday, email: finalEmail };
+            localStorage.setItem('user_' + phone, JSON.stringify(userData));
+
+            sessionStorage.setItem('name', name);
+            sessionStorage.setItem('birthday', birthday);
+            sessionStorage.setItem('email', finalEmail);
+
+            populateDetails();
+            showPage('page3');
+        }
+    }
+
+    function populateDetails() {
+        document.getElementById('displayPhone').textContent = sessionStorage.getItem('phone') || '-';
+        document.getElementById('displayName').textContent = sessionStorage.getItem('name') || '-';
+        document.getElementById('displayBirthday').textContent = sessionStorage.getItem('birthday') || '-';
+        document.getElementById('displayEmail').textContent = sessionStorage.getItem('email') || '-';
+    }
+
+    function startOver() {
+        sessionStorage.clear();
+        showPage('page1');
+    }
+
+    function clearRegistration() {
+        localStorage.clear();
+        sessionStorage.clear();
+        alert('Registration cleared! Next demo will show registration form.');
+        showPage('page1');
+    }
+</script>
+</body>
+</html>
